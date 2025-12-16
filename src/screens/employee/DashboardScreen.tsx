@@ -27,6 +27,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useComplianceStore } from '../../store/complianceStore';
 import { useUserStore } from '../../store/userStore';
+import { useShiftStore } from '../../store/shiftStore';
 import { NextShiftCard } from '../../components/dashboard/NextShiftCard';
 import { Shift, RemoteTask } from '../../types';
 
@@ -34,10 +35,32 @@ export default function DashboardScreen() {
   const navigation = useNavigation();
   const { startTunnel, appMode } = useComplianceStore();
   const { user } = useUserStore();
+  const getTradeRequests = useShiftStore((state) => state.getTradeRequests);
+  const acceptTrade = useShiftStore((state) => state.acceptTrade);
+  const declineTrade = useShiftStore((state) => state.declineTrade);
   const [isStartingTask, setIsStartingTask] = useState(false);
 
   // Mock user data
   const userName = user?.firstName || 'Alex';
+  
+  // Get trade requests for current user
+  const tradeRequests = user ? getTradeRequests(user.id) : [];
+  
+  // Debug logging
+  React.useEffect(() => {
+    if (user) {
+      console.log('=== Dashboard Trade Requests Debug ===');
+      console.log('Current User ID:', user.id);
+      console.log('Trade Requests Found:', tradeRequests.length);
+      console.log('Trade Request Details:', tradeRequests.map(s => ({
+        id: s.id,
+        role: s.role,
+        status: s.tradeStatus,
+        from: s.tradeInitiatorId,
+        to: s.tradeTargetUserId,
+      })));
+    }
+  }, [user, tradeRequests]);
   
   // Get greeting based on time of day
   const getGreeting = (): string => {
@@ -45,6 +68,35 @@ export default function DashboardScreen() {
     if (hour < 12) return 'Good morning';
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
+  };
+  
+  // Handle trade accept
+  const handleAcceptTrade = (shiftId: string, shiftRole: string) => {
+    console.log('=== Accepting Trade ===');
+    console.log('Shift ID:', shiftId);
+    console.log('User ID:', user?.id);
+    
+    acceptTrade(shiftId);
+    
+    Alert.alert(
+      'Trade Accepted! ✓',
+      `You've accepted the ${shiftRole} shift. The request has been sent to your manager for approval.\n\nYou can track the status in the "My Shifts" tab.`,
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Force re-render by triggering navigation
+            console.log('Trade acceptance confirmed');
+          },
+        },
+      ]
+    );
+  };
+  
+  // Handle trade decline
+  const handleDeclineTrade = (shiftId: string) => {
+    declineTrade(shiftId);
+    Alert.alert('Trade Declined', 'The shift offer has been declined.');
   };
 
   // Mock next shift data
@@ -205,6 +257,66 @@ export default function DashboardScreen() {
               </View>
               <Text style={styles.scheduleButtonArrow}>›</Text>
             </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Trade Requests Section */}
+        {tradeRequests.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🔄 Trade Requests</Text>
+            <Text style={styles.sectionSubtitle}>
+              Your coworkers want to swap shifts with you
+            </Text>
+            
+            {tradeRequests.map((shift) => {
+              const shiftDate = new Date(shift.startTime);
+              const startTime = shiftDate.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              });
+              const endTime = new Date(shift.endTime).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              });
+              const dateStr = shiftDate.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              });
+              
+              return (
+                <View key={shift.id} style={styles.tradeRequestCard}>
+                  <View style={styles.tradeRequestHeader}>
+                    <Text style={styles.tradeRequestRole}>{shift.role}</Text>
+                    <View style={styles.tradeRequestBadge}>
+                      <Text style={styles.tradeRequestBadgeText}>NEW</Text>
+                    </View>
+                  </View>
+                  
+                  <Text style={styles.tradeRequestDate}>{dateStr}</Text>
+                  <Text style={styles.tradeRequestTime}>
+                    {startTime} - {endTime}
+                  </Text>
+                  <Text style={styles.tradeRequestLocation}>📍 {shift.location}</Text>
+                  
+                  <View style={styles.tradeRequestActions}>
+                    <TouchableOpacity
+                      style={[styles.tradeActionButton, styles.declineButton]}
+                      onPress={() => handleDeclineTrade(shift.id)}
+                    >
+                      <Text style={styles.declineButtonText}>Decline</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[styles.tradeActionButton, styles.acceptButton]}
+                      onPress={() => handleAcceptTrade(shift.id, shift.role)}
+                    >
+                      <Text style={styles.acceptButtonText}>✓ Accept</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -516,5 +628,84 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#999',
     fontWeight: '300',
+  },
+  tradeRequestCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3b82f6',
+  },
+  tradeRequestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  tradeRequestRole: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  tradeRequestBadge: {
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  tradeRequestBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#92400e',
+  },
+  tradeRequestDate: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  tradeRequestTime: {
+    fontSize: 16,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  tradeRequestLocation: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginBottom: 16,
+  },
+  tradeRequestActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  tradeActionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  declineButton: {
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  declineButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  acceptButton: {
+    backgroundColor: '#10b981',
+  },
+  acceptButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });

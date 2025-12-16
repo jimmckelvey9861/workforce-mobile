@@ -10,7 +10,10 @@
 
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text } from 'react-native';
+import TradeApprovalsScreen from '../screens/manager/TradeApprovalsScreen';
+import RosterScreen from '../screens/manager/RosterScreen';
+import PanicScreen from '../screens/manager/PanicScreen';
 
 // ============================================================================
 // TYPES
@@ -23,46 +26,6 @@ export type ManagerTabParamList = {
 };
 
 const Tab = createBottomTabNavigator<ManagerTabParamList>();
-
-// ============================================================================
-// PLACEHOLDER SCREENS
-// ============================================================================
-
-const TriageDashboardScreen = () => (
-  <View style={styles.container}>
-    <Text style={styles.title}>Triage Dashboard</Text>
-    <Text style={styles.subtitle}>
-      • Pending shift trades{'\n'}
-      • Time-off requests{'\n'}
-      • Compliance violations{'\n'}
-      • Urgent notifications
-    </Text>
-  </View>
-);
-
-const RosterScreen = () => (
-  <View style={styles.container}>
-    <Text style={styles.title}>Team Roster</Text>
-    <Text style={styles.subtitle}>
-      • View all employees{'\n'}
-      • Manage schedules{'\n'}
-      • Track attendance{'\n'}
-      • Performance metrics
-    </Text>
-  </View>
-);
-
-const PanicButtonScreen = () => (
-  <View style={styles.container}>
-    <Text style={styles.title}>Panic Button</Text>
-    <Text style={styles.subtitle}>
-      • Emergency alerts{'\n'}
-      • Broadcast messages{'\n'}
-      • Critical notifications{'\n'}
-      • Incident reporting
-    </Text>
-  </View>
-);
 
 // ============================================================================
 // NAVIGATOR
@@ -83,11 +46,11 @@ export const ManagerTabNavigator = () => {
     >
       <Tab.Screen
         name="TriageDashboard"
-        component={TriageDashboardScreen}
+        component={TradeApprovalsScreen}
         options={{
-          title: 'Triage',
+          title: 'Approvals',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24, color }}>⚡</Text>
+            <Text style={{ fontSize: 24, color }}>✓</Text>
           ),
         }}
       />
@@ -103,7 +66,7 @@ export const ManagerTabNavigator = () => {
       />
       <Tab.Screen
         name="PanicButton"
-        component={PanicButtonScreen}
+        component={PanicScreen}
         options={{
           title: 'Panic',
           tabBarIcon: ({ color }) => (
@@ -114,28 +77,3 @@ export const ManagerTabNavigator = () => {
     </Tab.Navigator>
   );
 };
-
-// ============================================================================
-// STYLES
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    lineHeight: 28,
-  },
-});

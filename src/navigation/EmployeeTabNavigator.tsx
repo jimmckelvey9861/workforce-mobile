@@ -16,7 +16,9 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import DashboardScreen from '../screens/employee/DashboardScreen';
+import MyShiftsScreen from '../screens/employee/MyShiftsScreen';
 import ScheduleCanvasScreen from '../screens/employee/ScheduleCanvasScreen';
+import ShiftDetailsScreen from '../screens/employee/ShiftDetailsScreen';
 import { PayStateHeader } from '../components/compliance/PayStateHeader';
 
 // ============================================================================
@@ -29,6 +31,7 @@ export type EmployeeTabParamList = {
   Schedule: undefined;
   Tasks: undefined;
   ScheduleCanvas: undefined; // Hidden screen accessed from Dashboard
+  ShiftDetails: { shiftId: string }; // Hidden screen for shift details
 };
 
 const Tab = createBottomTabNavigator<EmployeeTabParamList>();
@@ -45,19 +48,6 @@ const TimeClockScreen = () => (
       • View current shift{'\n'}
       • GPS verification{'\n'}
       • Compliance tracking
-    </Text>
-    <Text style={styles.note}>Coming soon!</Text>
-  </View>
-);
-
-const ScheduleScreen = () => (
-  <View style={styles.container}>
-    <Text style={styles.title}>📅 Schedule & Marketplace</Text>
-    <Text style={styles.subtitle}>
-      • View your schedule{'\n'}
-      • Trade shifts{'\n'}
-      • Browse available shifts{'\n'}
-      • Request time off
     </Text>
     <Text style={styles.note}>Coming soon!</Text>
   </View>
@@ -115,9 +105,9 @@ export const EmployeeTabNavigator = () => {
       />
       <Tab.Screen
         name="Schedule"
-        component={ScheduleScreen}
+        component={MyShiftsScreen}
         options={{
-          title: 'Schedule',
+          title: 'My Shifts',
           tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 24, color }}>📅</Text>
           ),
@@ -141,6 +131,17 @@ export const EmployeeTabNavigator = () => {
         component={ScheduleCanvasScreen}
         options={{
           headerShown: false,
+          tabBarButton: () => null, // Hide from tab bar
+        }}
+      />
+      
+      {/* Hidden screen: ShiftDetails (accessed from anywhere) */}
+      <Tab.Screen
+        name="ShiftDetails"
+        component={ShiftDetailsScreen}
+        options={{
+          headerShown: true,
+          title: 'Shift Details',
           tabBarButton: () => null, // Hide from tab bar
         }}
       />
